@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Smart Hospital Queue and Patient Management System Using C</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f3f7f6;--surface:#ffffff;--ink:#10303a;--muted:#55707a;--line:#cfdcdc;
+  --crit:#c62f2f;--urg:#b87500;--norm:#1f8a5b;--accent:#0f5e6e;--accent-ink:#ffffff;--code:#0e2a33;--code-ink:#d7ecee;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0c1d23;--surface:#12292f;--ink:#e3f0f1;--muted:#91adb2;--line:#244048;
+    --crit:#ff6b6b;--urg:#f2b441;--norm:#4cc593;--accent:#5cc6d8;--accent-ink:#082126;--code:#08161a;--code-ink:#cfe6e9;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c1d23;--surface:#12292f;--ink:#e3f0f1;--muted:#91adb2;--line:#244048;
+  --crit:#ff6b6b;--urg:#f2b441;--norm:#4cc593;--accent:#5cc6d8;--accent-ink:#082126;--code:#08161a;--code-ink:#cfe6e9;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.6 "IBM Plex Sans",system-ui,sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+h1,h2,h3{font-family:"Bricolage Grotesque",system-ui,sans-serif;line-height:1.1;margin:0}
+h1{font-size:clamp(2.1rem,6vw,3.8rem);font-weight:800;letter-spacing:-.02em;max-width:18ch}
+h2{font-size:1.7rem;font-weight:700;letter-spacing:-.01em;margin-bottom:12px}
+h3{font-size:1.05rem;font-weight:700}
+p{max-width:62ch;margin:0 0 12px}
+.hero{padding:48px 0 28px}
+.hero p{color:var(--muted);font-size:1.1rem;margin-top:16px}
+.board{display:grid;grid-template-columns:1.5fr 1fr;gap:16px;margin-top:24px}
+@media(max-width:820px){.board{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
+.panel h3{margin-bottom:10px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.panel h3 small{font:400 .8rem "IBM Plex Mono",monospace;color:var(--muted)}
+form{display:grid;grid-template-columns:1fr 80px 130px auto;gap:8px;margin-bottom:14px}
+@media(max-width:560px){form{grid-template-columns:1fr 1fr}form button{grid-column:1/-1}}
+input,select,button{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-width:0}
+button{cursor:pointer;background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:500}
+button.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+button:disabled{opacity:.45;cursor:not-allowed}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+ol{list-style:none;margin:0;padding:0}
+.row{display:grid;grid-template-columns:62px 1fr auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.tok{font:400 .85rem "IBM Plex Mono",monospace;color:var(--muted)}
+.nm{font-weight:500}.nm span{color:var(--muted);font-weight:400;font-size:.9rem}
+.tag{font-size:.78rem;font-weight:500;padding:2px 8px;border-radius:99px;border:1.5px solid currentColor}
+.p1{color:var(--crit)}.p2{color:var(--urg)}.p3{color:var(--norm)}
+.row.first{border-left:4px solid var(--crit);padding-left:8px}
+.empty{color:var(--muted);padding:8px 0}
+.now{font-family:"Bricolage Grotesque",sans-serif;font-size:1.5rem;font-weight:700;margin:4px 0 12px;min-height:2em}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.heap{display:flex;gap:6px;flex-wrap:wrap;font:400 .78rem "IBM Plex Mono",monospace;margin-top:10px}
+.heap b{font-weight:400;border:1px solid var(--line);border-radius:4px;padding:2px 6px}
+.heap i{font-style:normal;color:var(--muted);align-self:center;margin-right:2px}
+section{padding:36px 0}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:"Bricolage Grotesque",sans-serif;font-weight:700}
+td:first-child{font-weight:500;white-space:nowrap}
+.mods{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:12px}
+.mods div{border-top:3px solid var(--accent);padding-top:10px}
+.mods p{color:var(--muted);font-size:.95rem;margin:4px 0 0}
+pre{background:var(--code);color:var(--code-ink);border-radius:10px;padding:16px;overflow-x:auto;font:400 .85rem/1.55 "IBM Plex Mono",monospace;margin:12px 0 0}
+footer{border-top:1px solid var(--line);padding:22px 0 32px;color:var(--muted);font-size:.9rem}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <h1>Smart Hospital Queue and Patient Management System Using C</h1>
+  <p>A console application that registers patients, ranks them by medical urgency and calls the next one in order. Try the live version of its queue logic below.</p>
+
+  <div class="board">
+    <div class="panel">
+      <h3>Register a patient <small>push → heap</small></h3>
+      <form id="f">
+        <input id="n" placeholder="Patient name" required aria-label="Patient name" maxlength="24">
+        <input id="a" type="number" min="0" max="120" placeholder="Age" required aria-label="Age">
+        <select id="p" aria-label="Priority"><option value="1">Critical</option><option value="2">Urgent</option><option value="3" selected>Normal</option></select>
+        <button type="submit">Add patient</button>
+      </form>
+      <h3>Waiting queue <small id="cnt">0 waiting</small></h3>
+      <ol id="q"></ol>
+      <div class="heap" id="hp" aria-label="Heap array"></div>
+    </div>
+    <div class="panel">
+      <h3>Now serving <small>pop ← heap</small></h3>
+      <div class="now" id="now">No one yet</div>
+      <div class="actions">
+        <button id="next">Call next patient</button>
+        <button id="undo" class="ghost">Undo last call</button>
+      </div>
+      <h3>Served today <small>stack</small></h3>
+      <ol id="h"></ol>
+    </div>
+  </div>
+</div></header>
+
+<main class="wrap">
+<section>
+  <h2>How the queue decides</h2>
+  <p>Critical patients are always called before urgent ones, and urgent before normal. Patients with the same priority are served in the order they arrived, so nobody waits forever behind a later arrival of equal urgency.</p>
+</section>
+
+<section>
+  <h2>Data structures used</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Structure</th><th>Job in the system</th><th>Cost</th></tr></thead>
+    <tbody>
+      <tr><td>Binary min-heap</td><td>Triage queue ordered by priority, then arrival token</td><td>Insert and call next: O(log n)</td></tr>
+      <tr><td>Linked list</td><td>Patient records that grow with admissions and shrink at discharge</td><td>Insert at head: O(1)</td></tr>
+      <tr><td>Stack</td><td>Served history and undo of the last call</td><td>Push and pop: O(1)</td></tr>
+      <tr><td>Hash table</td><td>Look up a patient by ID</td><td>Average O(1)</td></tr>
+      <tr><td>File I/O</td><td>Save and load records between runs</td><td>O(n)</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>Modules</h2>
+  <div class="mods">
+    <div><h3>Registration</h3><p>Creates a patient record and issues a token number.</p></div>
+    <div><h3>Triage</h3><p>Assigns priority and inserts the patient into the heap.</p></div>
+    <div><h3>Calling</h3><p>Removes the highest-priority patient and shows who is next.</p></div>
+    <div><h3>Records</h3><p>Searches, updates and discharges patients, and saves them to file.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>Core of the C implementation</h2>
+  <p>The heap insert that keeps the most urgent patient at the top.</p>
+<pre>typedef struct {
+    int  token;      /* arrival order */
+    char name[30];
+    int  age;
+    int  priority;   /* 1 critical, 2 urgent, 3 normal */
+} Patient;
+
+Patient heap[MAX];
+int size = 0;
+
+int higher(Patient a, Patient b) {
+    if (a.priority != b.priority) return a.priority &lt; b.priority;
+    return a.token &lt; b.token;
+}
+
+void insert(Patient p) {
+    int i = size++;
+    heap[i] = p;
+    while (i &gt; 0 &amp;&amp; higher(heap[i], heap[(i - 1) / 2])) {
+        Patient t = heap[i];
+        heap[i] = heap[(i - 1) / 2];
+        heap[(i - 1) / 2] = t;
+        i = (i - 1) / 2;
+    }
+}</pre>
+</section>
+</main>
+<footer><div class="wrap">Smart Hospital Queue and Patient Management System · Data structures capstone · Written in C. This page simulates the queue logic in the browser.</div></footer>
+
+<script>
+(function(){
+  var heap=[],hist=[],seq=0,cur=null;
+  var L=["","Critical","Urgent","Normal"];
+  function hi(a,b){return a.p!==b.p?a.p<b.p:a.s<b.s}
+  function push(x){var i=heap.length;heap.push(x);
+    while(i>0){var u=(i-1)>>1;if(hi(heap[i],heap[u])){var t=heap[i];heap[i]=heap[u];heap[u]=t;i=u}else break}}
+  function pop(){if(!heap.length)return null;var top=heap[0],last=heap.pop();
+    if(heap.length){heap[0]=last;var i=0;
+      for(;;){var l=2*i+1,r=l+1,m=i;
+        if(l<heap.length&&hi(heap[l],heap[m]))m=l;
+        if(r<heap.length&&hi(heap[r],heap[m]))m=r;
+        if(m===i)break;var t=heap[i];heap[i]=heap[m];heap[m]=t;i=m}}
+    return top}
+  function tk(x){return"T-"+String(x.s).padStart(3,"0")}
+  function esc(s){return s.replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+  function row(x,first){return'<li class="row'+(first?" first":"")+'"><span class="tok">'+tk(x)+'</span><span class="nm">'+esc(x.n)+' <span>age '+x.a+'</span></span><span class="tag p'+x.p+'">'+L[x.p]+'</span></li>'}
+  function render(){
+    var s=heap.slice().sort(function(a,b){return hi(a,b)?-1:1});
+    var q=document.getElementById("q");
+    q.innerHTML=s.length?s.map(function(x,i){return row(x,i===0)}).join(""):'<li class="empty">Nobody is waiting. Add a patient to start.</li>';
+    document.getElementById("cnt").textContent=heap.length+" waiting";
+    document.getElementById("hp").innerHTML='<i>heap[]</i>'+heap.map(function(x){return"<b>"+x.p+"·"+tk(x).slice(2)+"</b>"}).join("");
+    document.getElementById("now").textContent=cur?tk(cur)+" · "+cur.n:"No one yet";
+    document.getElementById("h").innerHTML=hist.length?hist.slice().reverse().slice(0,5).map(function(x){return row(x)}).join(""):'<li class="empty">Called patients appear here.</li>';
+    document.getElementById("next").disabled=!heap.length;
+    document.getElementById("undo").disabled=!cur;
+  }
+  function add(n,a,p){push({s:++seq,n:n,a:a,p:p})}
+  document.getElementById("f").addEventListener("submit",function(e){
+    e.preventDefault();
+    var n=document.getElementById("n"),a=document.getElementById("a"),p=document.getElementById("p");
+    add(n.value.trim(),parseInt(a.value,10),parseInt(p.value,10));
+    n.value="";a.value="";n.focus();render()});
+  document.getElementById("next").addEventListener("click",function(){
+    var x=pop();if(!x)return;if(cur)hist.push(cur);cur=x;render()});
+  document.getElementById("undo").addEventListener("click",function(){
+    if(!cur)return;
+    push(cur);cur=hist.pop()||null;render()});
+  add("Ravi Kumar",54,3);add("Meena S",67,2);add("Arjun P",31,1);add("Divya R",8,3);
+  render();
+})();
+</script>
+</body>
+</html>
